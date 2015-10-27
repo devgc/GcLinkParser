@@ -1,0 +1,22 @@
+GcLinkParser Uses the following libraries.
+
+liblnk is a library to access the Windows Shortcut File (LNK) format.
+
+Project information:
+
+* Status: alpha
+* Licence: LGPLv3+
+
+libfwsi is a library to access the Windows Shell Item format.
+
+Project information:
+* Status: experimental
+* Licence: LGPLv3+
+
+libolecf is a library to access the OLE 2 Compound File (OLECF) format.
+
+The OLE 2 Compound File format is used to store certain versions of Microsoft Office files, thumbs.db and other file formats.
+
+Project information:
+* Status: alpha
+* Licence: LGPLv3+
