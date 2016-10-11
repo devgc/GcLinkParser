@@ -41,7 +41,8 @@ import re
 sys.path.append('..\\..\\ElasticHandler\\source')
 import elastichandler
 
-VERSION = '0.15'
+_VERSION_ = '1.00'
+VERSION = _VERSION_
 
 APPID_STR = '''65009083bfa6a094	(app launched via XPMode)	8/22/2011	Win4n6 List Serv
 469e4a7982cea4d4	? (.job)	8/22/2011	Win4n6 List Serv
@@ -1318,7 +1319,7 @@ def GetOptions():
     #Options:
     #evidence_name,index,report,config
     
-    usage = '''GcLinkParser v'''+VERSION+''' [Copywrite G-C Partners, LLC 2015]
+    usage = '''GcLinkParser v'''+_VERSION_+''' [Copywrite G-C Partners, LLC 2015,2016]
 
 EXAMPLES:
 ========================================================================
