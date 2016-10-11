@@ -11,7 +11,7 @@ liblnk - Project Page: https://github.com/libyal/liblnk
 
 libfwsi - Project Page: https://github.com/libyal/libfwsi
 
-libolecf - Project Page: https://github.com/libyal/libolec
+libolecf - Project Page: https://github.com/libyal/libolecf
 
 Special Thanks to Joachim Metz! His libraries make this work.
 
