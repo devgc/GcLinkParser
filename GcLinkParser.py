@@ -1382,7 +1382,7 @@ Name the file 'AppIdList.txt' and should be formated as 16HEXID\\tAPP_NAME
         dest='timeformat',
         action="store",
         type=str,
-        default='%m/%d/%Y %H:%M:%S.%f',
+        default='{0.month:02d}/{0.day:02d}/{0.year:04d} {0.hour:02d}:{0.minute:02d}:{0.second:02d}.{0.resolution.microseconds:06d}',
         help='datetime format'
     )
     
@@ -2321,12 +2321,7 @@ def ConvertDateTime(timeformat,timezone,datetime_in):
     
     datetime_out = new_tz.localize(datetime_in).astimezone(utc)
     
-    try:
-        datetime_out_str = datetime_out.strftime(
-            timeformat
-        )
-    except Exception as e:
-        datetime_out_str = datetime_out.isoformat(" ").split("+")[0]
+    datetime_out_str = timeformat.format(datetime_out)
     
     return datetime_out_str
 
