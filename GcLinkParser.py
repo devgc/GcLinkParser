@@ -37,12 +37,47 @@ import md5
 import datetime
 import StringIO
 import re
-
-sys.path.append('..\\..\\ElasticHandler\\source')
+import collections
 import elastichandler
 
 _VERSION_ = '1.00'
 VERSION = _VERSION_
+
+TABLE_LNK = collections.OrderedDict([
+    ("VolumeLabel","TEXT"),
+    ("BaseName","TEXT"),
+    ("WorkingDir","TEXT"),
+    ("LocalPath","TEXT"),
+    ("ModificationDateTime","DATETIME"),
+    ("CmdArgs","TEXT"),
+    ("Source","TEXT"),
+    ("Flags","TEXT"),
+    ("DriveType","TEXT"),
+    ("AccessDateTime","DATETIME"),
+    ("DriveSerialNumber","TEXT"),
+    ("AppIdCode","TEXT"),
+    ("LnkTrgData.DistinctTypesHex","TEXT"),
+    ("LnkTrgData.ParentSeqNum","BIGINT UNSIGNED"),
+    ("LnkTrgData.ParentRefStr","TEXT"),
+    ("LnkTrgData.FileEntries","JSON"),
+    ("LnkTrgData.Volume","JSON"),
+    ("LnkTrgData.ParentLongName","TEXT"),
+    ("LnkTrgData.ParentEntryNum","BIGINT UNSIGNED"),
+    ("LnkTrgData.DistinctTypesStr","TEXT"),
+    ("LnkTrgData.ExtentionListing","TEXT"),
+    ("LnkTrgData.ItemCount","BIGINT UNSIGNED"),
+    ("LnkTrgData.RootFolder","JSON"),
+    ("Description","TEXT"),
+    ("RelativePath","TEXT"),
+    ("Codepage","TEXT"),
+    ("IconLoc","TEXT"),
+    ("AppIdName","TEXT"),
+    ("FileExt","TEXT"),
+    ("NetworkPath","TEXT"),
+    ("FileSize","BIGINT UNSIGNED"),
+    ("CreationDateTime","DATETIME"),
+    ("EnvVarLoc","TEXT")
+])
 
 APPID_STR = '''65009083bfa6a094	(app launched via XPMode)	8/22/2011	Win4n6 List Serv
 469e4a7982cea4d4	? (.job)	8/22/2011	Win4n6 List Serv
