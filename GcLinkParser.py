@@ -1,7 +1,7 @@
 ﻿# Tool to parse Link Files and Jump Lists
 #
 # Matthew Seyer, mseyer@g-cpartners.com
-# Copyright 2015 G-C Partners, LLC
+# Copyright 2015,2016 G-C Partners, LLC
 #
 # Copyright (C) 2015, G-C Partners, LLC <dev@g-cpartners.com>
 # G-C Partners licenses this file to you under the Apache License, Version
@@ -1458,7 +1458,6 @@ Name the file 'AppIdList.txt' and should be formated as 16HEXID\\tAPP_NAME
 
     return options
 
-
 def Main():
     ###GET OPTIONS###
     arguements = GetOptions()
@@ -1631,7 +1630,7 @@ class LnkHandler():
             )
             
         outHandler.WriteFooter()
-        
+    
     def ParseLinkFile(self,lnkfilename,outHandler):
         if isinstance(lnkfilename,StringIO.StringIO):
             logging.info('Parsing Link in File: {}'.format(self.filename))
@@ -1696,7 +1695,6 @@ class LnkHandler():
                 action
             )
     
-
 class OutputHandler():
     def __init__(self,options):
         self.options = options
@@ -1812,7 +1810,7 @@ class DestList(dict):
             entry_size = 114 + destList['DLE_PathSize']
             start_ofs += entry_size
             self['entries'].append(destList)
-        
+    
 class DestListHeader(dict):
     def __init__(self,buf):
         if buf is not None:
@@ -1824,7 +1822,7 @@ class DestListHeader(dict):
             self['unknown_3'] = struct.unpack("<L", buf[20:24])[0]
             self['unknown_4'] = struct.unpack("<L", buf[24:28])[0]
             self['unknown_5'] = struct.unpack("<L", buf[28:32])[0]
-
+    
 class DestListEntry(dict):
     def __init__(self,options,buf):
         if buf is not None:
@@ -1845,11 +1843,10 @@ class DestListEntry(dict):
             self['DLE_PinStatus'] = struct.unpack("<L", buf[108:108+4])[0]
             self['DLE_PathSize'] = struct.unpack("<H", buf[112:112+2])[0] * 2
             self['DLE_Path'] = buf[114:114+self['DLE_PathSize']].decode('utf-16le')
-
-
+    
 class JmpFile():
     def __init__(self,jmpfilename,options,outHandler,app_ids=None):
-        logging.info('Linkfile: {}'.format(options.file_name))
+        logging.debug('Linkfile: {}'.format(jmpfilename))
         self.outHandler = outHandler
         self.options = options
         self.timezone = options.timezone
@@ -1962,7 +1959,7 @@ class JmpFile():
                 continue
             
             item_cnt += 1
-            
+    
     def GetAppId(self,jmpfilename,AppIds):
         info = {
             'AppIdCode':None,
@@ -1982,7 +1979,7 @@ class JmpFile():
     
 class LnkFile():
     def __init__(self,filename=None,filehandle=None,options=None):
-        logging.info('Linkfile: {}'.format(options.file_name))
+        logging.debug('Linkfile: {}'.format(filename))
         self.options = options
         self.timezone = options.timezone
         self.file_name = filename
@@ -2009,7 +2006,7 @@ class LnkFile():
         
         if not self.error_flag:
             self._GetShellItems()
-        
+    
     def _GetShellItems(self):
         self.shellItems = pyfwsi.item_list()
         
