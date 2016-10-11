@@ -1357,17 +1357,18 @@ Name the file 'AppIdList.txt' and should be formated as 16HEXID\\tAPP_NAME
         '-f','--file',
         dest='file_name',
         action="store",
-        type=str,
+        type=unicode,
         default=None,
         help='lnk filename'
     )
     
     options.add_argument(
-        '--jmp',
-        dest='jmp_flag',
-        action="store_true",
-        default=False,
-        help='Parse files as jumplists'
+        '-d','--directory',
+        dest='directory',
+        action="store",
+        type=unicode,
+        default=None,
+        help='directory that contains linkfiles or jumplists'
     )
     
     options.add_argument(
@@ -1376,6 +1377,14 @@ Name the file 'AppIdList.txt' and should be formated as 16HEXID\\tAPP_NAME
         action="store_true",
         default=False,
         help='get filelist from pipe (dir /b /s /a *.lnk)'
+    )
+    
+    options.add_argument(
+        '--jmp',
+        dest='jmp_flag',
+        action="store_true",
+        default=False,
+        help='Parse files as jumplists'
     )
     
     options.add_argument(
@@ -1464,15 +1473,39 @@ def Main():
     CheckOutputOptions(options)
     CheckImputOptions(options)
     
-    if options.jmp_flag == True:
-        jmpHandler = JmpHandler(options)
-        jmpHandler.ParseJmpFiles()
+    re.IGNORECASE
+    if options.directory is not None:
+        jmp_files = []
+        lnk_files = []
+        for root, directories, filenames in os.walk(options.directory):
+            for filename in filenames:
+                result = re.search('.*(\.lnk$|ions-ms$)',filename)
+                if result:
+                    fullname = os.path.join(root,filename)
+                    ftype = result.group(1)
+                    if ftype.lower() == u'ions-ms':
+                        jmp_files.append(fullname)
+                    elif ftype.lower() == u'.lnk':
+                        lnk_files.append(fullname)
+                    #logging.info(fullname.encode('utf8',errors='replace'))
+        if options.jmp_flag == True:
+            if len(jmp_files) > 0:
+                jmpHandler = JmpHandler(options,filelist=jmp_files)
+                jmpHandler.ParseJmpFiles()
+        else:
+            if len(lnk_files) > 0:
+                lnkHandler = LnkHandler(options,filelist=lnk_files)
+                lnkHandler.ParseLinkFiles()
     else:
-        lnkHandler = LnkHandler(options)
-        lnkHandler.ParseLinkFiles()
+        if options.jmp_flag == True:
+            jmpHandler = JmpHandler(options)
+            jmpHandler.ParseJmpFiles()
+        else:
+            lnkHandler = LnkHandler(options)
+            lnkHandler.ParseLinkFiles()
     
 def CheckImputOptions(options):
-    if options.file_name is None:
+    if options.file_name is None and options.directory is None:
         if options.pipe_flag == False:
             print 'No source. Use -f OR --pipe'
             sys.exit(1)
@@ -1485,18 +1518,21 @@ def CheckOutputOptions(options):
                 sys.exit(1)
  
 class JmpHandler():
-    def __init__(self,options):
+    def __init__(self,options,filelist=None):
         self.options = options
         self.files_to_parse = []
         
         self.AppIds = self.LoadAppList()
         
-        if options.pipe_flag:
-            for line in sys.stdin:
-                line = line.strip('\n')
-                self.files_to_parse.append(line)
+        if filelist:
+            self.files_to_parse = filelist
         else:
-            self.files_to_parse.append(options.file_name)
+            if options.pipe_flag:
+                for line in sys.stdin:
+                    line = line.strip('\n')
+                    self.files_to_parse.append(line)
+            else:
+                self.files_to_parse.append(options.file_name)
             
         logging.info('Initialized Jumplist Handler')
         
@@ -1549,7 +1585,7 @@ class JmpHandler():
         outHandler.WriteFooter()
     
 class LnkHandler():
-    def __init__(self,options,filehandle=None,filename=None,jmp_info={'AppIdCode':None,'AppIdName':None}):
+    def __init__(self,options,filelist=None,filehandle=None,filename=None,jmp_info={'AppIdCode':None,'AppIdName':None}):
         self.options = options
         self.filename = filename
         self.filehandle = filehandle
@@ -1557,15 +1593,18 @@ class LnkHandler():
         
         self.files_to_parse = []
         
-        if self.filehandle is None:
-            if options.pipe_flag:
-                for line in sys.stdin:
-                    line = line.strip('\n')
-                    self.files_to_parse.append(line)
-            else:
-                self.files_to_parse.append(options.file_name)
+        if filelist:
+            self.files_to_parse = filelist
         else:
-            self.files_to_parse.append(self.filehandle)
+            if self.filehandle is None:
+                if options.pipe_flag:
+                    for line in sys.stdin:
+                        line = line.strip('\n')
+                        self.files_to_parse.append(line)
+                else:
+                    self.files_to_parse.append(options.file_name)
+            else:
+                self.files_to_parse.append(self.filehandle)
             
         logging.info('Initialized Link Handler')
     
