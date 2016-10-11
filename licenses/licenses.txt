@@ -1,5 +1,10 @@
 GcLinkParser Uses the following libraries.
 
+ElasticHandler is a library for assorted classes and methods for indexing reports and retrieving information from an elastic index.
+Project information:
+
+* Licence: Apache License, Version 2.0 
+
 liblnk is a library to access the Windows Shortcut File (LNK) format.
 
 Project information:
