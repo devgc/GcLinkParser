@@ -2187,7 +2187,9 @@ class LnkFile():
                     )
                 except IOError as e:
                     logging.warn('{}'.format(e.message))
-                    shell_info['ModificationTime'] = self._GetNullDateTime()
+                    shell_info['ModificationTime'] = self._GetNullDateTime(
+                        self.timeformat
+                    )
                 
                 if aliasnames[shell_info['ShellItemTypeStr']] not in record:
                     record[aliasnames[shell_info['ShellItemTypeStr']]] = []
@@ -2254,7 +2256,9 @@ class LnkFile():
                 )
             except IOError as e:
                 logging.warn('{}'.format(e.message))
-                info['AccessTime'] = self._GetNullDateTime()
+                info['AccessTime'] = self._GetNullDateTime(
+                    self.timeformat
+                )
         
         if hasattr(extention_block,'creation_time'):
             try:
@@ -2265,7 +2269,9 @@ class LnkFile():
                 )
             except IOError as e:
                 logging.warn('{}'.format(e.message))
-                info['CreationTime'] = self._GetNullDateTime()
+                info['CreationTime'] = self._GetNullDateTime(
+                    self.timeformat
+                )
         
         if hasattr(extention_block,'data_size'): info['ExtentionBlockSize'] = extention_block.data_size
         if hasattr(extention_block,'file_reference'):
@@ -2287,16 +2293,10 @@ class LnkFile():
         
         return info
     
-    def _GetNullDateTime(self):
+    def _GetNullDateTime(self,timeformat):
         datetime_in = datetime.datetime(1601,1,1)
         
-        try:
-            datetime_out_str = datetime_in.strftime(
-                self.timeformat
-            )
-        except Exception as e:
-            datetime_out_str = datetime_in.isoformat(" ").split("+")[0]
-            #datetime_out_str = 'na'
+        datetime_out_str = timeformat.format(datetime_in)
         
         return datetime_out_str
     
