@@ -37,8 +37,6 @@ import md5
 import datetime
 import StringIO
 import re
-
-sys.path.append('..\\..\\ElasticHandler\\source')
 import elastichandler
 
 _VERSION_ = '1.00'
