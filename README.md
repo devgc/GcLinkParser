@@ -2,16 +2,20 @@
 A GC link parser for both linkfiles and jumplists.
 
 You will need the following libraries:
-elastichandler
-https://github.com/devgc/ElasticHandler
-
-Get the following compiled python bindings here: https://github.com/log2timeline/l2tbinaries
-
-liblnk - Project Page: https://github.com/libyal/liblnk
-
-libfwsi - Project Page: https://github.com/libyal/libfwsi
-
-libolecf - Project Page: https://github.com/libyal/libolecf
+- elastichandler
+  - Project Page:</br>
+  https://github.com/devgc/ElasticHandler
+- liblnk
+  - Project Page:</br> 
+  https://github.com/libyal/liblnk
+  - Compiled binary:</br>
+  https://github.com/log2timeline/l2tbinaries
+- libfwsi
+  - Project Page:</br>
+  https://github.com/libyal/libfwsi
+- libolecf
+  - Project Page:</br>
+  https://github.com/libyal/libolecf
 
 Special Thanks to Joachim Metz! His libraries make this work.
 
