@@ -39,6 +39,8 @@ import StringIO
 import re
 import collections
 import elastichandler
+import copy
+from libglp import DbHandler
 
 _VERSION_ = '1.00'
 VERSION = _VERSION_
@@ -56,17 +58,7 @@ TABLE_LNK = collections.OrderedDict([
     ("AccessDateTime","DATETIME"),
     ("DriveSerialNumber","TEXT"),
     ("AppIdCode","TEXT"),
-    ("LnkTrgData.DistinctTypesHex","TEXT"),
-    ("LnkTrgData.ParentSeqNum","BIGINT UNSIGNED"),
-    ("LnkTrgData.ParentRefStr","TEXT"),
-    ("LnkTrgData.FileEntries","JSON"),
-    ("LnkTrgData.Volume","JSON"),
-    ("LnkTrgData.ParentLongName","TEXT"),
-    ("LnkTrgData.ParentEntryNum","BIGINT UNSIGNED"),
-    ("LnkTrgData.DistinctTypesStr","TEXT"),
-    ("LnkTrgData.ExtentionListing","TEXT"),
-    ("LnkTrgData.ItemCount","BIGINT UNSIGNED"),
-    ("LnkTrgData.RootFolder","JSON"),
+    ("LnkTrgData","JSON"),
     ("Description","TEXT"),
     ("RelativePath","TEXT"),
     ("Codepage","TEXT"),
@@ -1457,6 +1449,15 @@ Name the file 'AppIdList.txt' and should be formated as 16HEXID\\tAPP_NAME
     )
     
     options.add_argument(
+        '--sqlite',
+        dest='sqlite_db',
+        action="store",
+        default=None,
+        type=unicode,
+        help='output to a specified sqlite file'
+    )
+    
+    options.add_argument(
         '--delimiter',
         dest='delimiter',
         action="store",
@@ -1547,9 +1548,10 @@ def CheckImputOptions(options):
 def CheckOutputOptions(options):
     if options.csv_flag == False:
         if options.json_flag == False:
-            if options.eshost is None:
-                print 'No output options used. Use --json OR --txt OR --eshost "ESHOSTIP" --index INDEX'
-                sys.exit(1)
+            if options.sqlite_db is None:
+                if options.eshost is None:
+                    print 'No output options used. Use --json OR --txt OR --eshost "ESHOSTIP" --index INDEX'
+                    sys.exit(1)
  
 class JmpHandler():
     def __init__(self,options,filelist=None):
@@ -1589,7 +1591,8 @@ class JmpHandler():
     def ParseJmpFiles(self):
         
         outHandler = OutputHandler(
-            self.options
+            self.options,
+            ftype=u'lnk'
         )
         
         outHandler.WriteHeader()
@@ -1643,9 +1646,9 @@ class LnkHandler():
         logging.info('Initialized Link Handler')
     
     def ParseLinkFiles(self):
-        
         outHandler = OutputHandler(
-            self.options
+            self.options,
+            ftype=u'lnk'
         )
         
         outHandler.WriteHeader()
@@ -1731,8 +1734,19 @@ class LnkHandler():
             )
     
 class OutputHandler():
-    def __init__(self,options):
+    def __init__(self,options,ftype=None):
         self.options = options
+        if self.options.sqlite_db:
+            db_name = self.options.sqlite_db
+            if ftype:
+                filename, file_extension = os.path.splitext(db_name)
+                db_name = u'{}.{}{}'.format(filename,ftype,file_extension)
+                
+            self.dbconfig = DbHandler.DbConfig(
+                db_type='sqlite',
+                db=db_name
+            )
+            
         if self.options.csv_flag == True:
             self.writer = csv.DictWriter(
                 sys.stdout,
@@ -1795,6 +1809,17 @@ class OutputHandler():
         )
     
     def WriteHeader(self):
+        if self.options.sqlite_db:
+            # Create table #
+            dbHandler = self.dbconfig.GetDbHandle()
+            dbHandler.DropTable('linkfiles')
+            dbHandler.CreateTableFromMapping(
+                'linkfiles',
+                TABLE_LNK,
+                None
+            )
+            self.dbTransaction = dbHandler.GetDbTransaction()
+            
         if self.options.csv_flag == True:
             self.writer.writeheader()
             
@@ -1802,6 +1827,11 @@ class OutputHandler():
             self.records = []
     
     def WriteRecord(self,record):
+        if self.options.sqlite_db:
+            insertrow = copy.deepcopy(record)
+            insertrow['LnkTrgData'] = json.dumps(insertrow['LnkTrgData'])
+            self.dbTransaction.InsertDict('linkfiles',insertrow)
+        
         if self.options.csv_flag == True:
             thisRow = record
             
@@ -1823,6 +1853,9 @@ class OutputHandler():
             self.records.append(record)
     
     def WriteFooter(self):
+        if self.options.sqlite_db:
+            self.dbTransaction.Commit()
+            
         if self.options.csv_flag == True:
             pass
             
