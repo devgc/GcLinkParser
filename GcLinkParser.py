@@ -15,6 +15,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.  See the License for the specific language governing
 # permissions and limitations under the License.
+#
+# Jumplist format: https://github.com/libyal/assorted/blob/master/documentation/Jump%20lists%20format.asciidoc
 
 import logging
 log_fmt = '%(module)s:%(funcName)s:%(lineno)d %(message)s'
@@ -68,7 +70,8 @@ TABLE_LNK = collections.OrderedDict([
     ("NetworkPath","TEXT"),
     ("FileSize","BIGINT UNSIGNED"),
     ("CreationDateTime","DATETIME"),
-    ("EnvVarLoc","TEXT")
+    ("EnvVarLoc","TEXT"),
+    ("DestInfo","JSON")
 ])
 
 APPID_STR = '''65009083bfa6a094	(app launched via XPMode)	8/22/2011	Win4n6 List Serv
@@ -1830,6 +1833,9 @@ class OutputHandler():
         if self.options.sqlite_db:
             insertrow = copy.deepcopy(record)
             insertrow['LnkTrgData'] = json.dumps(insertrow['LnkTrgData'])
+            if 'DestInfo' in insertrow.keys():
+                insertrow['DestInfo'] = json.dumps(insertrow['DestInfo'])
+                
             self.dbTransaction.InsertDict('linkfiles',insertrow)
         
         if self.options.csv_flag == True:
@@ -1865,19 +1871,35 @@ class OutputHandler():
     
 class DestList(dict):
     def __init__(self,options,buf):
+        buf_hex = buf.encode('hex')
         self['header'] = DestListHeader(
             buf[:32]
         )
         self['entries'] = []
         start_ofs = 32
+        
         for entry_num in range(1,self['header']['entry_count']+1):
-            destList = DestListEntry(
-                options,
-                buf[start_ofs:]
-            )
-            entry_size = 114 + destList['DLE_PathSize']
-            start_ofs += entry_size
-            self['entries'].append(destList)
+            if self['header']['version'] == 1:
+                destList = DestListEntryV1(
+                    options,
+                    buf[start_ofs:]
+                )
+                entry_size = 114 + destList['DLE_PathSize']
+                start_ofs += entry_size
+                self['entries'].append(destList)
+            elif self['header']['version'] >= 3:
+                destList = DestListEntryV3(
+                    options,
+                    buf[start_ofs:]
+                )
+                entry_size = 130 + destList['DLE_PathSize'] + 4
+                start_ofs += entry_size
+                self['entries'].append(destList)
+            else:
+                raise(Exception(u'Unhandled DestList entry with header version: {}'.format(
+                    self['header']['version']
+                )))
+                
     
 class DestListHeader(dict):
     def __init__(self,buf):
@@ -1891,28 +1913,56 @@ class DestListHeader(dict):
             self['unknown_4'] = struct.unpack("<L", buf[24:28])[0]
             self['unknown_5'] = struct.unpack("<L", buf[28:32])[0]
     
-class DestListEntry(dict):
+class DestListEntryV1(dict):
     def __init__(self,options,buf):
+        buf_hex = buf.encode('hex')
+        buf_len = len(buf)
         if buf is not None:
-            if len(buf) > 114:
-                self['DLE_Unknown1Hash'] = buf[0:8].encode('hex')
-                self['DLE_DroidVolId'] = buf[8:8+16].encode('hex')
-                self['DLE_DroidFileId'] = buf[24:24+16].encode('hex')
-                self['DLE_BirthDroidVolId'] = buf[40:40+16].encode('hex')
-                self['DLE_BirthDroidFileId'] = buf[56:56+16].encode('hex')
-                self['DLE_Hostname'] = buf[72:72+16]
-                self['DLE_EntryNum'] = struct.unpack("<L", buf[88:88+4])[0]
-                self['DLE_Unknown2'] = struct.unpack("<L", buf[92:92+4])[0]
-                self['DLE_Unknown3'] = struct.unpack("<L", buf[96:96+4])[0]
-                self['DLE_LastModificationDatetime'] = ConvertDateTime(
-                    options.timeformat,
-                    options.timezone,
-                    GetTimeStamp(buf[100:100+8])
-                )
-                self['DLE_PinStatus'] = struct.unpack("<L", buf[108:108+4])[0]
-                self['DLE_PathSize'] = struct.unpack("<H", buf[112:112+2])[0] * 2
-                self['DLE_Path'] = buf[114:114+self['DLE_PathSize']].decode('utf-16le')
-    
+            self['DLE_Unknown1Hash'] = buf[0:8].encode('hex')
+            self['DLE_DroidVolId'] = buf[8:8+16].encode('hex')
+            self['DLE_DroidFileId'] = buf[24:24+16].encode('hex')
+            self['DLE_BirthDroidVolId'] = buf[40:40+16].encode('hex')
+            self['DLE_BirthDroidFileId'] = buf[56:56+16].encode('hex')
+            self['DLE_Hostname'] = buf[72:72+16]
+            self['DLE_EntryNum'] = struct.unpack("<L", buf[88:88+4])[0]
+            self['DLE_Unknown2'] = struct.unpack("<L", buf[92:92+4])[0]
+            self['DLE_Unknown3'] = struct.unpack("<L", buf[96:96+4])[0]
+            self['DLE_LastModificationDatetime'] = ConvertDateTime(
+                options.timeformat,
+                options.timezone,
+                GetTimeStamp(buf[100:100+8])
+            )
+            self['DLE_PinStatus'] = struct.unpack("<L", buf[108:108+4])[0]
+            self['DLE_PathSize'] = struct.unpack("<H", buf[112:112+2])[0] * 2
+            self['DLE_Path'] = buf[114:114+self['DLE_PathSize']].decode('utf-16le')
+            
+class DestListEntryV3(dict):
+    def __init__(self,options,buf):
+        buf_hex = buf.encode('hex')
+        buf_len = len(buf)
+        if buf is not None:
+            self['DLE_Unknown1Hash'] = buf[0:8].encode('hex')
+            self['DLE_DroidVolId'] = buf[8:8+16].encode('hex')
+            self['DLE_DroidFileId'] = buf[24:24+16].encode('hex')
+            self['DLE_BirthDroidVolId'] = buf[40:40+16].encode('hex')
+            self['DLE_BirthDroidFileId'] = buf[56:56+16].encode('hex')
+            self['DLE_Hostname'] = buf[72:72+16]
+            self['DLE_EntryNum'] = struct.unpack("<L", buf[88:88+4])[0]
+            self['DLE_Unknown2'] = struct.unpack("<L", buf[92:92+4])[0]
+            self['DLE_Unknown3'] = struct.unpack("<L", buf[96:96+4])[0]
+            self['DLE_LastModificationDatetime'] = ConvertDateTime(
+                options.timeformat,
+                options.timezone,
+                GetTimeStamp(buf[100:100+8])
+            )
+            self['DLE_PinStatus'] = struct.unpack("<L", buf[108:108+4])[0]
+            self['DLE_Unknown4'] = struct.unpack("<L", buf[112:112+4])[0]
+            self['DLE_Unknown5'] = struct.unpack("<L", buf[116:116+4])[0]
+            self['DLE_Unknown6'] = struct.unpack("<Q", buf[120:120+8])[0]
+            self['DLE_PathSize'] = struct.unpack("<H", buf[128:128+2])[0] * 2
+            self['DLE_Path'] = buf[130:130+self['DLE_PathSize']].decode('utf-16le')
+            self['DLE_Pad'] = buf[130+self['DLE_PathSize']:130+self['DLE_PathSize']+4].encode('hex')
+            
 class JmpFile():
     def __init__(self,jmpfilename,options,outHandler,app_ids=None):
         logging.debug('Linkfile: {}'.format(jmpfilename))
@@ -2404,6 +2454,7 @@ def EnumerateFlags(flag,flag_mapping):
     return str_flag
 
 def GetTimeStamp(raw_timestamp):
+    raw_timestamp_hex = raw_timestamp.encode('hex')
     timestamp = struct.unpack("Q",raw_timestamp)[0]
     
     if datetime < 0:
