@@ -2157,11 +2157,13 @@ class LnkFile():
             record['Description'] = self.lnkFile.description
         except Exception as error:
             record['Description'] = str(error)
-        record['DriveSerialNumber'] = self._FormatVolumeSerialNum(self.lnkFile.drive_serial_number),
+        record['DriveSerialNumber'] = self._FormatVolumeSerialNum(
+            self.lnkFile.drive_serial_number
+        )
         record['DriveType'] = self.EnumDriveType(
             self.lnkFile.drive_type
         )
-        record['EnvVarLoc'] = self.lnkFile.environment_variables_location,
+        record['EnvVarLoc'] = self.lnkFile.environment_variables_location
         record['AccessDateTime'] = ConvertDateTime(
             self.timeformat,
             self.timezone,
@@ -2232,6 +2234,9 @@ class LnkFile():
     
     def _FormatVolumeSerialNum(self,number):
         vol_s = None
+        
+        if number == 0:
+            return vol_s
         
         if number is not None:
             vol_s = hex(number)[2:-1].zfill(8)
