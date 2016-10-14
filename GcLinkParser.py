@@ -44,7 +44,7 @@ import elastichandler
 import copy
 from libglp import DbHandler
 
-_VERSION_ = '1.00'
+_VERSION_ = '1.01'
 VERSION = _VERSION_
 
 TABLE_LNK = collections.OrderedDict([
