@@ -2146,43 +2146,51 @@ class LnkFile():
         return 1
     
     def _GetRecordInfo(self):
-        record = {
-            'Source':self.file_name,
-            'Codepage':self.lnkFile.ascii_codepage,
-            'CmdArgs':self.lnkFile.command_line_arguments,
-            'Description':self.lnkFile.description,
-            'DriveSerialNumber':self._FormatVolumeSerialNum(self.lnkFile.drive_serial_number),
-            'DriveType':self.EnumDriveType(
-                self.lnkFile.drive_type
-            ),
-            'EnvVarLoc':self.lnkFile.environment_variables_location,
-            'AccessDateTime':ConvertDateTime(
-                self.timeformat,
-                self.timezone,
-                self.lnkFile.file_access_time
-            ),
-            'Flags':EnumerateFlags(
-                self.lnkFile.file_attribute_flags,
-                FILE_ATTRIBUTE_FLAGS
-            ),
-            'CreationDateTime':ConvertDateTime(
-                self.timeformat,
-                self.timezone,
-                self.lnkFile.file_creation_time
-            ),
-            'ModificationDateTime':ConvertDateTime(
-                self.timeformat,
-                self.timezone,
-                self.lnkFile.file_modification_time
-            ),
-            'FileSize':self.lnkFile.file_size,
-            'IconLoc':self.lnkFile.icon_location,
-            'LocalPath':self.lnkFile.local_path,
-            'NetworkPath':self.lnkFile.network_path,
-            'RelativePath':self.lnkFile.relative_path,
-            'VolumeLabel':self.lnkFile.volume_label,
-            'WorkingDir':self.lnkFile.working_directory
-        }
+        record = {}
+        record['Source'] = self.file_name
+        record['Codepage'] = self.lnkFile.ascii_codepage
+        try:
+            record['CmdArgs'] = getattr(self.lnkFile,'command_line_arguments',None)
+        except Exception as error:
+            record['CmdArgs'] = str(error)
+        try:
+            record['Description'] = self.lnkFile.description
+        except Exception as error:
+            record['Description'] = str(error)
+        record['DriveSerialNumber'] = self._FormatVolumeSerialNum(self.lnkFile.drive_serial_number),
+        record['DriveType'] = self.EnumDriveType(
+            self.lnkFile.drive_type
+        )
+        record['EnvVarLoc'] = self.lnkFile.environment_variables_location,
+        record['AccessDateTime'] = ConvertDateTime(
+            self.timeformat,
+            self.timezone,
+            self.lnkFile.file_access_time
+        )
+        record['Flags'] = EnumerateFlags(
+            self.lnkFile.file_attribute_flags,
+            FILE_ATTRIBUTE_FLAGS
+        )
+        record['CreationDateTime'] = ConvertDateTime(
+            self.timeformat,
+            self.timezone,
+            self.lnkFile.file_creation_time
+        )
+        record['ModificationDateTime'] = ConvertDateTime(
+            self.timeformat,
+            self.timezone,
+            self.lnkFile.file_modification_time
+        )
+        record['FileSize'] = self.lnkFile.file_size
+        try:
+            record['IconLoc'] = self.lnkFile.icon_location
+        except Exception as error:
+            record['IconLoc'] = str(error)
+        record['LocalPath'] = self.lnkFile.local_path
+        record['NetworkPath'] = self.lnkFile.network_path
+        record['RelativePath'] = self.lnkFile.relative_path
+        record['VolumeLabel'] = self.lnkFile.volume_label
+        record['WorkingDir'] = self.lnkFile.working_directory
         
         #Get Base Name and Ext#
         record['BaseName'] = self._GetFileName([
