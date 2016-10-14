@@ -1522,7 +1522,7 @@ def Main():
                         jmp_files.append(fullname)
                     elif ftype.lower() == u'.lnk':
                         lnk_files.append(fullname)
-                    #logging.info(fullname.encode('utf8',errors='replace'))
+                    #logging.info(fullname.decode('utf8',errors='replace'))
         if options.jmp_flag == True:
             if len(jmp_files) > 0:
                 jmpHandler = JmpHandler(options,filelist=jmp_files)
@@ -1570,7 +1570,7 @@ class JmpHandler():
             else:
                 self.files_to_parse.append(options.file_name)
             
-        logging.info('Initialized Jumplist Handler')
+        logging.info(u'Initialized Jumplist Handler')
         
     def LoadAppList(self):
         applist = {}
@@ -1592,7 +1592,7 @@ class JmpHandler():
         
         outHandler = OutputHandler(
             self.options,
-            ftype=u'lnk'
+            ftype=u'jmp'
         )
         
         outHandler.WriteHeader()
@@ -1601,7 +1601,7 @@ class JmpHandler():
             outHandler.CreateElasticIndex(self.options)
         
         for jmpfilename in self.files_to_parse:
-            logging.info('Parsing File: {}'.format(jmpfilename))
+            logging.info(u'Parsing File: {}'.format(jmpfilename.decode('utf-8',errors='replace')))
             
             try:
                 thisJmp = JmpFile(
@@ -1611,7 +1611,7 @@ class JmpHandler():
                     app_ids = self.AppIds
                 )
             except IOError:
-                logging.error('IOError on file {}'.format(jmpfilename))
+                logging.error(u'IOError on file {}'.format(jmpfilename.decode('utf-8',errors='replace')))
                 continue
             
         if self.options.eshost is not None:
@@ -1643,7 +1643,7 @@ class LnkHandler():
             else:
                 self.files_to_parse.append(self.filehandle)
             
-        logging.info('Initialized Link Handler')
+        logging.info(u'Initialized Link Handler')
     
     def ParseLinkFiles(self):
         outHandler = OutputHandler(
@@ -1671,9 +1671,9 @@ class LnkHandler():
     
     def ParseLinkFile(self,lnkfilename,outHandler):
         if isinstance(lnkfilename,StringIO.StringIO):
-            logging.info('Parsing Link in File: {}'.format(self.filename))
+            logging.info(u'Parsing Link in File: {}'.format(self.filename.decode('utf-8',errors='replace')))
         else:
-            logging.info('Parsing File: {}'.format(lnkfilename))
+            logging.info(u'Parsing File: {}'.format(lnkfilename.decode('utf-8',errors='replace')))
             
         if self.filehandle is None:
             try:
@@ -1682,7 +1682,7 @@ class LnkHandler():
                     options=self.options
                 )
             except IOError:
-                logging.error('IOError on file {}'.format(lnkfilename))
+                logging.error(u'IOError on file {}'.format(lnkfilename.decode('utf-8',errors='replace')))
                 return 0
         else:
             lnkfilename = self.filename
@@ -1694,7 +1694,7 @@ class LnkHandler():
                     options=self.options
                 )
             except IOError:
-                logging.error('IOError on file {}'.format(lnkfilename))
+                logging.error(u'IOError on file {}'.format(lnkfilename.decode('utf-8',errors='replace')))
                 return 0
         
         record = thisLf._GetRecordInfo()
@@ -1894,23 +1894,24 @@ class DestListHeader(dict):
 class DestListEntry(dict):
     def __init__(self,options,buf):
         if buf is not None:
-            self['DLE_Unknown1Hash'] = buf[0:8].encode('hex')
-            self['DLE_DroidVolId'] = buf[8:8+16].encode('hex')
-            self['DLE_DroidFileId'] = buf[24:24+16].encode('hex')
-            self['DLE_BirthDroidVolId'] = buf[40:40+16].encode('hex')
-            self['DLE_BirthDroidFileId'] = buf[56:56+16].encode('hex')
-            self['DLE_Hostname'] = buf[72:72+16]
-            self['DLE_EntryNum'] = struct.unpack("<L", buf[88:88+4])[0]
-            self['DLE_Unknown2'] = struct.unpack("<L", buf[92:92+4])[0]
-            self['DLE_Unknown3'] = struct.unpack("<L", buf[96:96+4])[0]
-            self['DLE_LastModificationDatetime'] = ConvertDateTime(
-                options.timeformat,
-                options.timezone,
-                GetTimeStamp(buf[100:100+8])
-            )
-            self['DLE_PinStatus'] = struct.unpack("<L", buf[108:108+4])[0]
-            self['DLE_PathSize'] = struct.unpack("<H", buf[112:112+2])[0] * 2
-            self['DLE_Path'] = buf[114:114+self['DLE_PathSize']].decode('utf-16le')
+            if len(buf) > 114:
+                self['DLE_Unknown1Hash'] = buf[0:8].encode('hex')
+                self['DLE_DroidVolId'] = buf[8:8+16].encode('hex')
+                self['DLE_DroidFileId'] = buf[24:24+16].encode('hex')
+                self['DLE_BirthDroidVolId'] = buf[40:40+16].encode('hex')
+                self['DLE_BirthDroidFileId'] = buf[56:56+16].encode('hex')
+                self['DLE_Hostname'] = buf[72:72+16]
+                self['DLE_EntryNum'] = struct.unpack("<L", buf[88:88+4])[0]
+                self['DLE_Unknown2'] = struct.unpack("<L", buf[92:92+4])[0]
+                self['DLE_Unknown3'] = struct.unpack("<L", buf[96:96+4])[0]
+                self['DLE_LastModificationDatetime'] = ConvertDateTime(
+                    options.timeformat,
+                    options.timezone,
+                    GetTimeStamp(buf[100:100+8])
+                )
+                self['DLE_PinStatus'] = struct.unpack("<L", buf[108:108+4])[0]
+                self['DLE_PathSize'] = struct.unpack("<H", buf[112:112+2])[0] * 2
+                self['DLE_Path'] = buf[114:114+self['DLE_PathSize']].decode('utf-16le')
     
 class JmpFile():
     def __init__(self,jmpfilename,options,outHandler,app_ids=None):
@@ -2218,7 +2219,9 @@ class LnkFile():
             shell_info['ExtentionBlockCount'] = shell_item.number_of_extension_blocks
             if shell_item.number_of_extension_blocks > 0:
                 if shell_item.number_of_extension_blocks > 1:
-                    logging.info('Multiple Extention Blocks in {}'.format(self.file_name))
+                    logging.info(u'Multiple Extention Blocks in {}'.format(
+                        self.file_name.decode('utf-8',errors='replace')
+                    ))
                     
                 for extention_blk in shell_item.extension_blocks:
                     list_ext_block_types.append(
