@@ -1478,6 +1478,14 @@ Name the file 'AppIdList.txt' and should be formated as 16HEXID\\tAPP_NAME
     )
     
     options.add_argument(
+        '--json_ascii',
+        dest='json_ascii',
+        action="store_true",
+        default=False,
+        help='Set JSON.dumps\' ensure_ascii to True'
+    )
+    
+    options.add_argument(
         '--eshost',
         dest='eshost',
         action="store",
@@ -1832,9 +1840,9 @@ class OutputHandler():
     def WriteRecord(self,record):
         if self.options.sqlite_db:
             insertrow = copy.deepcopy(record)
-            insertrow['LnkTrgData'] = json.dumps(insertrow['LnkTrgData'])
+            insertrow['LnkTrgData'] = json.dumps(insertrow['LnkTrgData'],ensure_ascii=self.options.json_ascii)
             if 'DestInfo' in insertrow.keys():
-                insertrow['DestInfo'] = json.dumps(insertrow['DestInfo'])
+                insertrow['DestInfo'] = json.dumps(insertrow['DestInfo'],ensure_ascii=self.options.json_ascii)
                 
             self.dbTransaction.InsertDict('linkfiles',insertrow)
         
@@ -1867,7 +1875,11 @@ class OutputHandler():
             
         if self.options.json_flag == True:
             json_out = {'gc_link_file':self.records}
-            print json.dumps(json_out,indent=4)
+            print json.dumps(
+                json_out,
+                indent=4,
+                ensure_ascii=self.options.json_ascii
+            )
     
 class DestList(dict):
     def __init__(self,options,buf):
