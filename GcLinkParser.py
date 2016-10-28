@@ -1600,7 +1600,6 @@ class JmpHandler():
         return applist
         
     def ParseJmpFiles(self):
-        
         outHandler = OutputHandler(
             self.options,
             ftype=u'jmp'
